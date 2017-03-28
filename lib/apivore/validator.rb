@@ -157,7 +157,8 @@ module Apivore
     private
 
     def json_request?
-      request.format == 'application/json'
+      # text/html is treated as JSON by apivore :-/
+      %w(application/json text/html).include? request.format
     end
   end
 end
