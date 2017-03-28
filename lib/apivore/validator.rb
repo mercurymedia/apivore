@@ -31,7 +31,7 @@ module Apivore
         post_checks(swagger_checker)
 
         if has_errors? && response.body.length > 0
-          errors << "\nResponse body:\n #{JSON.pretty_generate(JSON.parse(response.body))}"
+          errors << "\nResponse body:\n#{pretty_response_body}"
         end
 
         swagger_checker.remove_tested_end_point_response(
@@ -95,6 +95,8 @@ module Apivore
     end
 
     def check_response_is_valid(swagger_checker)
+      return true unless json_request?
+
       swagger_errors = swagger_checker.has_matching_document_for(
         path, method, response.status, response_body
       )
@@ -110,7 +112,21 @@ module Apivore
     end
 
     def response_body
-      JSON.parse(response.body) unless response.body.blank?
+      if response.body.blank?
+        return nil
+      elsif json_request?
+        JSON.parse(response.body)
+      else
+        response.body
+      end
+    end
+
+    def pretty_response_body
+      if json_request?
+        JSON.pretty_generate(JSON.parse(response.body))
+      else
+        response.body
+      end
     end
 
     def has_errors?
@@ -136,6 +152,12 @@ module Apivore
 
     # Required by rails
     def reset_template_assertion
+    end
+
+    private
+
+    def json_request?
+      request.format == 'application/json'
     end
   end
 end
